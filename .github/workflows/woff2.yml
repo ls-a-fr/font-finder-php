@@ -674,7 +674,7 @@ jobs:
     if: needs.check-versions.outputs.changed == 'true'
     needs:
       - check-versions
-      - build-windows
+      - test-build-windows
       - build-darwin
       - build-linux
       - build-bsd
