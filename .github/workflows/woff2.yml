@@ -41,6 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       changed: ${{ steps.check.outputs.changed }}
+      woff2_commit: ${{ steps.check.outputs.woff2_commit }}
+      brotli_commit: ${{ steps.check.outputs.brotli_commit }}
     steps:
       - uses: actions/checkout@v6
 
@@ -83,6 +85,8 @@ jobs:
           else
             echo "Sources changed. Build required."
             echo "changed=true" >> $GITHUB_OUTPUT
+            echo "woff2_commit=$WOFF2_COMMIT" >> $GITHUB_OUTPUT
+            echo "brotli_commit=$BROTLI_COMMIT" >> $GITHUB_OUTPUT
 
             # Update VERSIONFILE for next runs
             echo "woff2: $WOFF2_COMMIT" > "${{ env.VERSIONFILE }}"
@@ -843,8 +847,11 @@ jobs:
           run: |
 
             set -e
+            pkg refresh
+            pkg install -y web/php-82
+            
             /opt/csw/bin/pkgutil -U
-            /opt/csw/bin/pkgutil -y -i web/php-82 composer
+            /opt/csw/bin/pkgutil -y -i composer
             
             # Ensure PHP and Composer are in PATH
             export PATH="/opt/csw/bin:/opt/csw/sbin:$PATH"
@@ -929,8 +936,22 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+
+          WOFF2_COMMIT="${{ needs.check-versions.outputs.woff2_commit }}"
+          BROTLI_COMMIT="${{ needs.check-versions.outputs.brotli_commit }}"
+          VERSION="${{ steps.bump_version.outputs.new_version }}"
+          MSG="Release v$VERSION
+          
+          Updated to:
+            - woff2 @ $WOFF2_COMMIT
+            - brotli @ $BROTLI_COMMIT
+          
+          Links: 
+            - https://github.com/google/woff2/commit/$WOFF2_COMMIT 
+            - https://github.com/google/brotli/commit/$BROTLI_COMMIT
+          "
           git add composer.json deps/* ${{ env.VERSIONFILE }}
-          git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }} and add built executables" || echo "No changes"
-          git tag "v${{ steps.bump_version.outputs.new_version }}" -a -m "Release v${{ steps.bump_version.outputs.new_version }}"
+          git commit -m "$MSG" || echo "No changes"
+          git tag "v$VERSION" -a -m "$MSG"
           git push
-          git push origin "v${{ steps.bump_version.outputs.new_version }}"
+          git push origin "v$VERSION"
