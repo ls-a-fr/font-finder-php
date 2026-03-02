@@ -859,6 +859,8 @@ jobs:
 
             # Enable OpenSSL extension
             echo "extension=openssl.so" | sudo tee /etc/php/8.2/conf.d/openssl.ini
+            # Enable mbstring extension
+            echo "extension=mbstring.so" | sudo tee /etc/php/8.2/conf.d/mbstring.ini
 
             # Solaris needs this for PHP to find libssl.so.3
             export LD_LIBRARY_PATH="/usr/lib/openssl/3:${LD_LIBRARY_PATH:-}"
