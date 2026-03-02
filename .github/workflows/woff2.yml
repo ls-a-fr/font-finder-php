@@ -800,10 +800,10 @@ jobs:
 
             # Install required packages (BSD specific)
             if [ "${{ matrix.os }}" = "freebsd" ]; then
-              pkg update -f
-              pkg install -y php82 composer
+              sudo pkg update -f
+              sudo pkg install -y php82 composer
             else
-              pkg_add php composer 
+              sudo pkg_add php composer 
             fi
 
             cd .ci-tests/woff2
