@@ -126,9 +126,6 @@ jobs:
             msvc_arch: Win32
             devcmd_arch: x86
 
-    defaults:
-      run:
-        shell: bash
     steps:
       # Checkouts this repository
       - uses: actions/checkout@v6
@@ -266,7 +263,7 @@ jobs:
         working-directory: tmp
         run: |
           cmake -S . -B build-${{ matrix.arch }} \
-            -DCMAKE_POLICY_VERSION_MINIMUM="${{ env.CMAKEVER }}"" \
+            -DCMAKE_POLICY_VERSION_MINIMUM="${{ env.CMAKEVER }}" \
             -DCMAKE_BUILD_TYPE=${{ env.CONFIG }} \
             -DBUILD_SHARED_LIBS=OFF \
             -DCMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }} \
