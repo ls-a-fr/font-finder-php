@@ -352,14 +352,14 @@ jobs:
               -DCMAKE_POLICY_VERSION_MINIMUM="${{ env.CMAKEVER }}" \
               -DBUILD_SHARED_LIBS=OFF \
               -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc \
-              -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ \
+              -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++
           elif [ "${{ matrix.arch }}" = "arm64" ]; then
             cmake -S . -B build-${{ matrix.arch }} \
               -DCMAKE_BUILD_TYPE=${{ env.CONFIG }} \
               -DCMAKE_POLICY_VERSION_MINIMUM="${{ env.CMAKEVER }}" \
               -DBUILD_SHARED_LIBS=OFF \
               -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+              -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
           else
             cmake -S . -B build-${{ matrix.arch }} \
               -DCMAKE_BUILD_TYPE=${{ env.CONFIG }} \
@@ -660,6 +660,10 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
+
+      - name: Install Composer dependencies for woff2
+        working-directory: .ci-tests/woff2
+        run: composer install --no-interaction --no-progress --prefer-dist
 
       - name: Check woff2
         run: php .ci-tests/woff2/run_test.php
