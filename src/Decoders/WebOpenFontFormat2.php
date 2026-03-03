@@ -13,25 +13,37 @@ class WebOpenFontFormat2 implements FontDecoder
 {
     public static function extractFontMeta(string $raw, string $filename): array
     {
-        $raw = self::windowsDecodeWoff2($raw);
+        $raw = self::decodeWoff2($raw);
         return TrueTypeFont::extractFontMeta($raw, $filename);
     }
 
-    private static function windowsDecodeWoff2(string $raw): string
+    private static function decodeWoff2(string $raw): string
     {
         $tempFile = tempnam(sys_get_temp_dir(), 'lff');
         \file_put_contents($tempFile, $raw);
 
-        $process = new Process([
-            'cmd.exe',
-            '/c',
-            self::getWoff2Executable(),
-            $tempFile
-        ]);
+        if(SystemInformation::getCurrent()->isWindows()) {
+            $process = new Process([
+                'cmd.exe',
+                '/c',
+                self::getWoff2Executable(),
+                $tempFile
+            ]);
+        } else {
+            $process = new Process([
+                self::getWoff2Executable(),
+                $tempFile
+            ]);
+        }
         
         $process->run();
 
         if ($process->isSuccessful() !== true) {
+            // Debug BSD
+            error_log('WOFF2 exit code: ' . $process->getExitCode());
+            error_log('WOFF2 STDERR: ' . $process->getErrorOutput());
+            error_log('WOFF2 STDOUT: ' . $process->getOutput());
+            // End Debug BSD
             throw new RuntimeException('Could not execute woff2_decompress');
         }
 
