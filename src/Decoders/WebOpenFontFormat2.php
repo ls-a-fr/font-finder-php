@@ -74,7 +74,7 @@ class WebOpenFontFormat2 implements FontDecoder
         ]);
         $realpath = \realpath($path);
         if($realpath === false) {
-            throw new RuntimeException('Util woff2_decompress.exe could not be found, check your install. Path: ' . $path);
+            throw new RuntimeException('Util woff2_decompress could not be found, check your install. Path: ' . $path);
         }
         return $realpath;
     }
