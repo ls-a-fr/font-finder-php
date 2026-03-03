@@ -162,6 +162,11 @@ function getExpected(string $format)
     ];
 }
 
+// Debug BSD
+var_dump(__DIR__);
+var_dump(is_dir(__DIR__ . '/woff_samples'));
+var_dump(glob(__DIR__ . '/*'));
+
 // Actual check: structure,  number of elements, order, everything.
 foreach ([getExpected('woff'), getExpected('woff2')] as $i => $fontCollection) {
     // Special BSD operation:
