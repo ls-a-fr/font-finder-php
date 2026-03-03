@@ -68,7 +68,7 @@ class WebOpenFontFormat implements FontDecoder
             $chunk = substr($raw, $t['offset'], $t['compLength']);
 
             if ($t['compLength'] !== $t['origLength']) {
-                $chunk = gzuncompress($chunk);
+                $chunk = gzinflate($chunk);
             }
 
             $pad = (4 - ($t['origLength'] % 4)) % 4;
