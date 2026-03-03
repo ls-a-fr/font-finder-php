@@ -72,30 +72,12 @@ class WebOpenFontFormat implements FontDecoder
                 $chunk2 = @gzuncompress($chunk);
 
                 if ($chunk2 === false) {
-                    // Then raw deflate
+                    // Then raw deflate. Should not happen
                     $chunk2 = @gzinflate($chunk);
                 }
 
                 if ($chunk2 === false) {
-                    // Debug BSD
-                    error_log(sprintf(
-                        "TABLE %s: offset=%d compLength=%d origLength=%d",
-                        $t['tag'],
-                        $t['offset'],
-                        $t['compLength'],
-                        $t['origLength']
-                    ));
-                    if ($t['compLength'] !== $t['origLength']) {
-                        $prefix = bin2hex(substr($raw, $t['offset'], 4));
-                        error_log(sprintf(
-                            "COMPRESSED? %s: compLength=%d origLength=%d prefix=%s",
-                            $t['tag'],
-                            $t['compLength'],
-                            $t['origLength'],
-                            $prefix
-                        ));
-                    }
-                    // End Debug BSD
+                    // Nothing can be done, this file seems corrupted
                     throw new RuntimeException("Unable to decompress WOFF table {$t['tag']}");
                 }
 
@@ -116,6 +98,11 @@ class WebOpenFontFormat implements FontDecoder
             $tableData .= $chunk . str_repeat("\0", $pad);
             $offset += $t['origLength'] + $pad;
         }
+
+        // Debug BSD
+        $sfntFull = $sfnt . $tableRecords . $tableData;
+        error_log("SFNT builtSize=" . strlen($sfntFull) . " totalSfntSize=$totalSfntSize");
+        // End debug BSD
 
         return $sfnt . $tableRecords . $tableData;
     }
