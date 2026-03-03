@@ -64,18 +64,19 @@ class WebOpenFontFormat2 implements FontDecoder
     private static function getWoff2Executable() : string
     {
         $sysInfo = SystemInformation::getCurrent();
-        $path = realpath(implode(\DIRECTORY_SEPARATOR, [
+        $path = implode(\DIRECTORY_SEPARATOR, [
             __DIR__,
             '..',
             '..',
             'deps',
             $sysInfo->getValue(SystemInformation::FORMAT_DEPS),
             'woff2_decompress.exe'
-        ]));
-        if($path === false) {
-            throw new RuntimeException('Util woff2_decompress.exe could not be found, check your install');
+        ]);
+        $realpath = \realpath($path);
+        if($realpath === false) {
+            throw new RuntimeException('Util woff2_decompress.exe could not be found, check your install. Path: ' . $path);
         }
-        return $path;
+        return $realpath;
     }
 
 }
