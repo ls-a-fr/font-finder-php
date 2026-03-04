@@ -27,14 +27,17 @@ class Bsd implements FontPlatform {
             case 'openbsd':
                 break;
             default:
-                $sub = 'openbsd';
+                // FreeBSD is the most common out there, hopefully this unknown
+                // architecture is compatible with FreeBSD.
+                \trigger_error('Could not detect BSD system, fallback to freebsd');
+                $sub = 'freebsd';
         }
         $arch = strtolower(php_uname('m'));
 
         // Debug BSD
         echo "ARCH IS: " . $arch;
         // End Debug BSD
-        
+
         switch($arch) {
             case 'amd64':
                 return new SystemInformation(SystemInformation::OS_BSD, $sub, 'amd64');

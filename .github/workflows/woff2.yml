@@ -23,15 +23,17 @@ on:
   workflow_dispatch:
     inputs:
       force_mode:
-        description: "Forces rebuild even if no new version is available. Useful to add a new environment"
+        description: >
+          Forces rebuild even if no newer version of woff2/brotli is available.
+          Useful to test this workflow before adding a new environment
         required: true
         type: boolean
         default: false
       push_when_force:
         description: |
           Push to a new release after rebuild force mode. 
-          You may want to re-push if nothing changed, but this is not default behavior.
-          Useful to test this workflow
+          You may never want to push again if nothing changed.
+          However, this is needed when a new environment is allowed by this workflow.
         required: true
         type: boolean
         default: false
@@ -142,7 +144,7 @@ jobs:
           path: tmp
 
   # Build woff2_decompress on Windows (amd64 and i386) and push them as artifacts
-  build-windows:
+  build-windows-x64:
     runs-on: windows-latest
     needs: check-versions
     if: needs.check-versions.outputs.rebuild == 'true'
@@ -202,6 +204,81 @@ jobs:
       #     -- Could NOT find BrotliDec (missing: BROTLIDEC_LIBRARIES) (found version "")
       #     It is usually caused by these directives
       # - DBUILD_SHARED_LIBS: Prevents errors in library linking
+      - name: Configures build for woff2
+        working-directory: tmp
+        shell: powershell
+        run: |
+          cmake -S . -B build-${{ matrix.arch }} -A ${{ matrix.msvc_arch }} `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
+            -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE `
+            -DCMAKE_PREFIX_PATH="brotli" `
+            -DBROTLIDEC_INCLUDE_DIRS="brotli/c/include" `
+            -DBROTLIENC_INCLUDE_DIRS="brotli/c/include" `
+            -DBROTLIDEC_LIBRARIES="brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlidec-static.lib;brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlicommon-static.lib" `
+            -DBROTLIENC_LIBRARIES="brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlienc-static.lib;brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlicommon-static.lib"
+
+      # Builds woff2 based on previous step, and CONFIG defined in environment section
+      - name: Build woff2
+        working-directory: tmp
+        shell: powershell
+        # Prevents warning?
+        run: cmake --build build-${{ matrix.arch }} --config ${{ env.CONFIG }}
+
+      # Artifacts are stored as windows-${{ matrix.arch }}/woff2_decompress.exe
+      # We need to create a folder, and then push this folder as an artifact
+      - name: Prepare artifact structure
+        shell: powershell
+        run: |
+          mkdir -p artifact/windows-${{ matrix.arch }}
+          cp tmp/build-${{ matrix.arch }}/${{ env.CONFIG }}/woff2_decompress.exe `
+            artifact/windows-${{ matrix.arch }}/
+
+      # Upload artifacts. These artifacts will be used later, in collect-and-push action.
+      - name: Upload executable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}
+          path: artifact/windows-${{ matrix.arch }}
+
+  # Build woff2_decompress on Windows (amd64 and i386) and push them as artifacts
+  build-windows-arm:
+    runs-on: windows-11-arm
+    needs: check-versions
+    if: needs.check-versions.outputs.rebuild == 'true'
+
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            msvc_arch: arm64
+            devcmd_arch: arm64
+
+    steps:
+      # Checkouts this repository
+      - uses: actions/checkout@v6
+
+      # Download artifact created in prepare-sources
+      - name: Download woff2 sources
+        uses: actions/download-artifact@v7
+        with:
+          name: _external-woff2-sources
+          path: tmp
+
+      # Same code as build-windows-x64
+      - name: Configures build for brotli
+        working-directory: tmp/brotli
+        run: |
+          cmake -S . -B build-${{ matrix.arch }} -A ${{ matrix.msvc_arch }} `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+      # Same code as build-windows-x64
+      - name: Build brotli
+        working-directory: tmp/brotli
+        run: cmake --build build-${{ matrix.arch }} --config ${{ env.CONFIG }}
+      
+      # Same code as build-windows-x64
       - name: Configures build for woff2
         working-directory: tmp
         shell: powershell
@@ -643,10 +720,10 @@ jobs:
           name: solaris-${{ matrix.arch }}
           path: artifact/solaris-${{ matrix.arch }}
 
-  test-build-windows:
+  test-build-windows-x64:
     runs-on: windows-latest
     needs:
-      - build-windows
+      - build-windows-x64
 
     strategy:
       matrix:
@@ -658,6 +735,45 @@ jobs:
           - arch: i386
             msvc_arch: Win32
             devcmd_arch: x86
+
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # Checkouts this repository
+      - uses: actions/checkout@v6
+
+      # Artifacts are stored in "deps" folder
+      - name: Download Windows artifacts in deps folder
+        uses: actions/download-artifact@v7
+        with:
+          pattern: windows-*
+          path: deps
+
+      # Download PHP to execute test script
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Composer dependencies for woff2
+        working-directory: .ci-tests/woff2
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Check woff2
+        run: php .ci-tests/woff2/run_test.php
+
+  test-build-windows-arm:
+    runs-on: windows-11-arm
+    needs:
+      - build-windows-arm
+
+    strategy:
+      matrix:
+        include:
+          - arch: arm64
+            msvc_arch: arm64
+            devcmd_arch: arm64
 
     defaults:
       run:
@@ -952,7 +1068,8 @@ jobs:
       && needs.check-versions.outputs.rebuild == 'true'
     needs:
       - check-versions
-      - test-build-windows
+      - test-build-windows-x64
+      - test-build-windows-arm
       - test-build-darwin
       - test-build-linux
       - test-build-bsd
