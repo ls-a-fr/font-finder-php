@@ -769,8 +769,16 @@ jobs:
         shell: bash
 
     steps:
-      # Checkouts this repository
+      # Checkout this repository
       - uses: actions/checkout@v6
+
+      # Checkout BSD artifact. Remember that every file downloaded in ubuntu-latest
+      # will be passed into BSD VM.
+      - name: Download BSD artifacts in deps folder
+        uses: actions/download-artifact@v7
+        with:
+          pattern: bsd-*
+          path: deps
 
       # Run everything inside BSD VM
       - name: Test on ${{ matrix.os }} ${{ matrix.arch }}
@@ -783,10 +791,6 @@ jobs:
           run: |
 
             set -e
-
-            # Download BSD artifacts
-            echo "Downloading BSD artifacts..."
-            /usr/local/bin/gh run download --name "bsd-${{ matrix.os }}-${{ matrix.arch }}" --dir deps
 
             # Install required packages (BSD specific)
             if [ "${{ matrix.os }}" = "freebsd" ]; then
@@ -810,7 +814,7 @@ jobs:
             rm composer-setup.php
 
             # Ensures script is writable
-            chmod +x deps/bsd-${{ matrix.os }}-${{ matrix.arch }}/woff2_decompress
+            sudo chmod +x deps/bsd-${{ matrix.os }}-${{ matrix.arch }}/woff2_decompress
             
             # Debug BSD
             echo "=== FILE INFO ==="
@@ -841,6 +845,16 @@ jobs:
       # Check out this repository
       - uses: actions/checkout@v6
 
+      # Checkout Solaris artifact. Remember that every file downloaded in ubuntu-latest
+      # will be passed into BSD VM.
+      - name: Download Solaris artifacts in deps folder
+        uses: actions/download-artifact@v7
+        with:
+          pattern: solaris-*
+          # Solaris has a single artefact woff2_decompress. Will check on that later, but for now,
+          # push into an hardcoded folder
+          path: deps/solaris-${{ matrix.arch }}
+        
       # Run everything inside Solaris VM
       - name: Test on Solaris ${{ matrix.arch }}
         uses: vmactions/solaris-vm@v1
@@ -850,15 +864,6 @@ jobs:
           usesh: true
           run: |
             set -e
-
-            # Download Solaris artifacts
-            echo "Downloading Solaris artifacts..."
-            /usr/local/bin/gh run download --name "solaris-${{ matrix.arch }}" --dir deps
-            
-            # Solaris has a single artefact woff2_decompress. Will check on that later, but for now,
-            # move the artifact at the right place.
-            mkdir -p solaris-${{ matrix.arch }}
-            mv deps/woff2_decompress solaris-${{ matrix.arch}}/
 
             sudo pkg refresh
             sudo pkg install --accept web/php-82
@@ -894,7 +899,7 @@ jobs:
             rm composer-setup.php
 
             # Ensures woff2_decompress is runnable
-            chmod +x deps/solaris-${{ matrix.arch }}/woff2_decompress
+            sudo chmod +x deps/solaris-${{ matrix.arch }}/woff2_decompress
 
             # Install project dependencies
             cd .ci-tests/woff2
