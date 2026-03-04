@@ -109,7 +109,7 @@ jobs:
             # Update VERSIONFILE for next runs
             echo "woff2: $WOFF2_COMMIT" > "${{ env.VERSIONFILE }}"
             echo "brotli: $BROTLI_COMMIT" >> "${{ env.VERSIONFILE }}"
-          elif [ ${{ inputs.force_mode }} ]; then
+          elif [ "${{ inputs.force_mode }}" = "true" ]; then
             echo "Force mode, even if no new version is available, will rebuild anyway."
 
             # Update output
