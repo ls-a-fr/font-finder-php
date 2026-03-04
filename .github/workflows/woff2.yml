@@ -222,7 +222,6 @@ jobs:
       - name: Build woff2
         working-directory: tmp
         shell: powershell
-        # Prevents warning?
         run: cmake --build build-${{ matrix.arch }} --config ${{ env.CONFIG }}
 
       # Artifacts are stored as windows-${{ matrix.arch }}/woff2_decompress.exe
@@ -270,11 +269,11 @@ jobs:
         working-directory: tmp/brotli
         run: |
           # Note that CMAKEVER 3.15 was removed from windows-11-arm.
-          # Bypass by setting -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          # Bypass by setting -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
           cmake -S . -B build-${{ matrix.arch }} -A ${{ matrix.msvc_arch }} `
             -DBUILD_SHARED_LIBS=OFF `
             -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
-            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+            -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
       # Same code as build-windows-x64
       - name: Build brotli
@@ -286,6 +285,8 @@ jobs:
         working-directory: tmp
         shell: powershell
         run: |
+          # Note that CMAKEVER 3.15 was removed from windows-11-arm.
+          # Bypass by setting -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
           cmake -S . -B build-${{ matrix.arch }} -A ${{ matrix.msvc_arch }} `
             -DBUILD_SHARED_LIBS=OFF `
             -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
@@ -294,13 +295,13 @@ jobs:
             -DBROTLIDEC_INCLUDE_DIRS="brotli/c/include" `
             -DBROTLIENC_INCLUDE_DIRS="brotli/c/include" `
             -DBROTLIDEC_LIBRARIES="brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlidec-static.lib;brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlicommon-static.lib" `
-            -DBROTLIENC_LIBRARIES="brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlienc-static.lib;brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlicommon-static.lib"
+            -DBROTLIENC_LIBRARIES="brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlienc-static.lib;brotli/build-${{ matrix.arch }}/${{ env.CONFIG }}/brotlicommon-static.lib" `
+            -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
       # Builds woff2 based on previous step, and CONFIG defined in environment section
       - name: Build woff2
         working-directory: tmp
         shell: powershell
-        # Prevents warning?
         run: cmake --build build-${{ matrix.arch }} --config ${{ env.CONFIG }}
 
       # Artifacts are stored as windows-${{ matrix.arch }}/woff2_decompress.exe
