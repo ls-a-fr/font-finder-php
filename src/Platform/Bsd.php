@@ -34,7 +34,8 @@ class Bsd implements FontPlatform {
         switch($arch) {
             case 'amd64':
                 return new SystemInformation(SystemInformation::OS_BSD, $sub, 'amd64');
-            case 'aarch64':
+            case 'aarch64': // FreeBSD
+            case 'arm64':   // OpenBSD
                 return new SystemInformation(SystemInformation::OS_BSD, $sub, 'arm64');
             default:
                 \trigger_error('Could not detect BSD arch, fallback to amd64');
