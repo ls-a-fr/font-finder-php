@@ -797,7 +797,7 @@ jobs:
               sudo pkg update -f
               sudo pkg install -y php82 php82-mbstring php82-phar php82-filter php82-zlib
             else
-              sudo pkg_add php php-mbstring php-zlib
+              sudo pkg_add php-8.2.29p2
 
               # Detect installed PHP version directory (php-8.x)
               PHPVER=$(ls /etc | grep '^php-[0-9]\.[0-9]$')
