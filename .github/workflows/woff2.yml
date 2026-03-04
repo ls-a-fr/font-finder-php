@@ -272,7 +272,7 @@ jobs:
           # Bypass by setting -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
           cmake -S . -B build-${{ matrix.arch }} -A ${{ matrix.msvc_arch }} `
             -DBUILD_SHARED_LIBS=OFF `
-            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded `
             -DCMAKE_POLICY_VERSION_MINIMUM="3.5"
 
       # Same code as build-windows-x64
