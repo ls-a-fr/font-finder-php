@@ -21,6 +21,12 @@ name: Build Woff2 Decompress utility
 # consider staring this project, it helps us moving forward!
 on:
   workflow_dispatch:
+    inputs:
+      force_mode:
+        description: "Forces rebuild even if no new version is available. Useful to add a new environment"
+        required: true
+        type: boolean
+        default: false
 
 env:
   CMAKEVER: 3.15
@@ -32,11 +38,12 @@ jobs:
   # - pull woff2 repository
   # - checks last commit for woff2 and brotli
   # - compares them to deps/VERSION contents in this project
-  # - if same:
-  #   - stops there.
-  # - if different:
-  #   - changes happened, needs to rebuild
+  # - if different or force_mode is set:
+  #   - changes may have happened
+  #   - needs to rebuild
   #   - modifies deps/VERSION for future workflow usage
+  # - if different:
+  #   - stops here
   check-versions:
     runs-on: ubuntu-latest
     outputs:
@@ -78,11 +85,8 @@ jobs:
           echo "Previous WOFF2 commit: $PREV_WOFF2"
           echo "Previous BROTLI commit: $PREV_BROTLI"
 
-          # Compare
-          if [ "$WOFF2_COMMIT" = "$PREV_WOFF2" ] && [ "$BROTLI_COMMIT" = "$PREV_BROTLI" ]; then
-            echo "No source changes detected. Skipping builds. EXCEPT FOR NOW"
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
+          # Compare commit shas, or use force_mode flag
+          if [ "$WOFF2_COMMIT" != "$PREV_WOFF2" ] || [ "$BROTLI_COMMIT" != "$PREV_BROTLI" ]; then
             echo "Sources changed. Build required."
             echo "changed=true" >> $GITHUB_OUTPUT
             echo "woff2_commit=$WOFF2_COMMIT" >> $GITHUB_OUTPUT
@@ -91,6 +95,12 @@ jobs:
             # Update VERSIONFILE for next runs
             echo "woff2: $WOFF2_COMMIT" > "${{ env.VERSIONFILE }}"
             echo "brotli: $BROTLI_COMMIT" >> "${{ env.VERSIONFILE }}"
+          elif [ ${{ inputs.force_mode }} ]; then
+            echo "Force mode, even if no new version is available, will rebuild anyway."
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No source changes detected. Skipping builds."
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
       - name: Copy VERSIONFILE to root
@@ -470,7 +480,8 @@ jobs:
           name: _external-woff2-sources
           path: tmp
 
-      # Run everything inside BSD VM
+      # Run everything inside BSD VM. This action (cross-platform-actions/action@v0.32.0) creates
+      # a VM, so we cannot split this job into several smaller steps.
       - name: Build on ${{ matrix.os }} ${{ matrix.arch }}
         uses: cross-platform-actions/action@v0.32.0
         with:
@@ -555,7 +566,8 @@ jobs:
           name: _external-woff2-sources
           path: tmp
 
-      # Run everything inside Solaris VM
+      # Run everything inside Solaris VM. This action (vmactions/solaris-vm@v1) creates
+      # a VM, so we cannot split this job into several smaller steps.
       - name: Build on Solaris ${{ matrix.arch }}
         uses: vmactions/solaris-vm@v1
         with:
@@ -800,13 +812,13 @@ jobs:
               sudo pkg_add php-8.2.29p2
 
               # Detect installed PHP version directory (php-8.x)
-              PHPVER=$(ls /etc | grep '^php-[0-9]\.[0-9]$')
+              #PHPVER=$(ls /etc | grep '^php-[0-9]\.[0-9]$')
               
-              # Enable extensions
-              sudo cp /etc/$PHPVER.sample/extensions.ini /etc/$PHPVER/extensions.ini
-              echo "extension=openssl" | sudo tee -a /etc/$PHPVER/extensions.ini
-              echo "extension=mbstring" | sudo tee -a /etc/$PHPVER/extensions.ini
-              echo "extension=zlib" | sudo tee -a /etc/$PHPVER/extensions.ini
+              # Enable extensions (is it really necessary? Makefile says it's included)
+              #sudo cp /etc/$PHPVER.sample/extensions.ini /etc/$PHPVER/extensions.ini
+              #echo "extension=openssl" | sudo tee -a /etc/$PHPVER/extensions.ini
+              #echo "extension=mbstring" | sudo tee -a /etc/$PHPVER/extensions.ini
+              #echo "extension=zlib" | sudo tee -a /etc/$PHPVER/extensions.ini
             fi
 
             curl -sS https://getcomposer.org/installer -o composer-setup.php
