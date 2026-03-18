@@ -154,6 +154,8 @@ jobs:
             if [ "${{ matrix.os }}" = "freebsd" ]; then
               sudo pkg update -f
               sudo pkg install -y php83 php83-mbstring php83-phar php83-filter php83-zlib
+              # These extensions are mandatory for dev dependencies here
+              sudo pkg install php83-tokenizer php83-dom php83-simplexml php83-iconv
 
               # Activate php.ini
               sudo cp /usr/local/etc/php.ini-production /usr/local/etc/php.ini
@@ -163,6 +165,10 @@ jobs:
               sudo mv /usr/local/etc/php/ext-20-mbstring.ini.sample /usr/local/etc/php/ext-20-mbstring.ini
               sudo mv /usr/local/etc/php/ext-20-phar.ini.sample /usr/local/etc/php/ext-20-phar.ini
               sudo mv /usr/local/etc/php/ext-20-zlib.ini.sample /usr/local/etc/php/ext-20-zlib.ini
+              sudo mv /usr/local/etc/php/ext-20-tokenizer.ini.sample /usr/local/etc/php/ext-20-tokenizer.ini
+              sudo mv /usr/local/etc/php/ext-20-dom.ini.sample /usr/local/etc/php/ext-20-dom.ini
+              sudo mv /usr/local/etc/php/ext-20-simplexml.ini.sample /usr/local/etc/php/ext-20-simplexml.ini
+              sudo mv /usr/local/etc/php/ext-20-iconv.ini.sample /usr/local/etc/php/ext-20-iconv.ini
 
             else
               # p7zip allows to uncompress 7z and is mandatory for composer
@@ -260,6 +266,7 @@ jobs:
             # sudo chmod +x deps/solaris-${{ matrix.arch }}/woff2_decompress
 
             # Install project dependencies
+            export COMPOSER_ALLOW_SUPERUSER="1"
             composer install --no-interaction --no-progress --prefer-dist
             composer test
 
