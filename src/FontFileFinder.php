@@ -6,6 +6,7 @@ namespace Lsa\Font\Finder;
 
 use DirectoryIterator;
 use Lsa\Font\Finder\Exceptions\ConfigurationException;
+use Lsa\Font\Finder\Exceptions\InvalidOperationException;
 use Lsa\Font\Finder\Platform\Bsd;
 use Lsa\Font\Finder\Platform\Darwin;
 use Lsa\Font\Finder\Platform\Linux;
@@ -277,7 +278,18 @@ class FontFileFinder
             $fontFiles = \array_merge($fontFiles, self::getSystemFontFiles());
         }
         foreach ($this->directories as $directory) {
-            $fontFiles = \array_merge($fontFiles, self::getFontsInDirectory($directory));
+            try {
+                $fontFiles = \array_merge($fontFiles, self::getFontsInDirectory($directory));
+            } catch(InvalidOperationException $e) {
+                // This is a problem: a specified directory does not exist or in not a directory
+                $str = $e->getMessage();
+                $this->errors[] = $str;
+                if($this->silent === false) {
+                    // That's exactly the point, to allow people to see errors to stderr
+                    // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
+                    \error_log($str);
+                }
+            }
         }
 
         $fonts = $this->extractFontsMetadata($fontFiles, $this->exceptions);
@@ -432,6 +444,12 @@ class FontFileFinder
      */
     private static function getFontsInDirectory(string $directory): array
     {
+        if(\file_exists($directory) === false || \is_dir($directory) === false) {
+            // Temporary code to check GitHub runner system directories
+            echo "Directory not found: ".$directory."\n";
+            // End temporary code
+            throw new InvalidOperationException('Directory does not exist, or is not a directory: ' . $directory);
+        }
         $fontFiles = [];
         $iterator = new DirectoryIterator($directory);
         foreach ($iterator as $fileInfo) {
@@ -474,6 +492,8 @@ class FontFileFinder
                 $str = 'Error decoding font '.$fontFile.': File does not exist';
                 $this->errors[] = $str;
                 if ($this->silent === false) {
+                    // That's exactly the point, to allow people to see errors to stderr
+                    // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged
                     \error_log($str);
                 }
                 continue;
@@ -562,7 +582,12 @@ class FontFileFinder
         $fontFiles = [];
         $directories = self::getFontDirectories();
         foreach ($directories as $directory) {
-            $fontFiles = \array_merge($fontFiles, self::getFontsInDirectory($directory));
+            try {
+                $fontFiles = \array_merge($fontFiles, self::getFontsInDirectory($directory));
+            } catch(InvalidOperationException) {
+                // No apparent problem that optional system font directories are not found
+                continue;
+            }
         }
 
         return $fontFiles;
