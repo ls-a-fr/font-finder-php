@@ -469,14 +469,23 @@ class FontFileFinder
          */
         $fonts = [];
         foreach ($fontFiles as $fontFile) {
+            $fontFileRealPath = \realpath($fontFile);
+            if($fontFileRealPath === false) {
+                $str = 'Error decoding font '.$fontFile.': File does not exist';
+                $this->errors[] = $str;
+                if ($this->silent === false) {
+                    \error_log($str);
+                }
+                continue;
+            }
             // Manage exceptions
-            if (self::shouldIgnoreFile($fontFile, $exceptions) === true) {
+            if (self::shouldIgnoreFile($fontFileRealPath, $exceptions) === true) {
                 continue;
             }
 
             // Extract metadata
             try {
-                $foundFonts = $this->decoderClass::extractFontMeta($fontFile);
+                $foundFonts = $this->decoderClass::extractFontMeta($fontFileRealPath);
                 foreach ($foundFonts as $font) {
                     if (isset($fonts[$font->name]) === false) {
                         $fonts[$font->name] = [];
@@ -484,7 +493,7 @@ class FontFileFinder
                     $fonts[$font->name][] = $font;
                 }
             } catch (ConfigurationException $e) {
-                $str = 'Error decoding font '.$fontFile.': '.$e->getMessage();
+                $str = 'Error decoding font '.$fontFileRealPath.': '.$e->getMessage();
                 $this->errors[] = $str;
                 if ($this->silent === false) {
                     // That's exactly the point, to allow people to see errors to stderr
