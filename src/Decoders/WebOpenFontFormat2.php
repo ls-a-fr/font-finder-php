@@ -51,19 +51,10 @@ class WebOpenFontFormat2 implements FontDecoder
         $tempFile = tempnam(sys_get_temp_dir(), 'lff');
         \file_put_contents($tempFile, $raw);
 
-        // Create shell command
-        $process = new Process([
-            self::getWoff2Executable(),
-            $tempFile,
-        ]);
-
-        $process->run();
-        if ($process->isSuccessful() !== true) {
-            throw new RuntimeException('Could not execute woff2_decompress: '.$process->getErrorOutput());
-        }
+        self::createTrueTypeFontFromWoff2($tempFile);
 
         // Rebuild output file name
-        $ttfFile = $tempFile.'.ttf';
+        $ttfFile = $tempFile . '.ttf';
         if (\str_contains($tempFile, '.') === true) {
             $ttfFileParts = explode('.', $tempFile);
             \array_pop($ttfFileParts);
@@ -86,6 +77,57 @@ class WebOpenFontFormat2 implements FontDecoder
         unlink($ttfFile);
 
         return $ttfContents;
+    }
+
+    protected static function createTrueTypeFontFromWoff2(string $tempFile): void
+    {
+        // Create shell command
+        $process = self::runWoff2Decompress($tempFile);
+
+        if ($process->isSuccessful() !== true) {
+            // Must be permissions
+            if (self::changeWoff2DecompressPermissions() === false) {
+                throw new RuntimeException('Could not execute woff2_decompress. Maybe this is permissions. Could not change them');
+            }
+            // Try again
+            $process = self::runWoff2Decompress($tempFile);
+            // It was not permissions, fail
+            if ($process->isSuccessful() === false) {
+                throw new RuntimeException('Could not execute woff2_decompress: ' . $process->getErrorOutput());
+            }
+        }
+    }
+
+
+    protected static function runWoff2Decompress(string $tempFile): Process
+    {
+        // Create shell command
+        $process = new Process([
+            self::getWoff2Executable(),
+            $tempFile,
+        ]);
+
+        $process->run();
+        return $process;
+    }
+
+    protected static function changeWoff2DecompressPermissions(): bool
+    {
+        if (\is_executable(self::getWoff2Executable()) === true) {
+            return true;
+        }
+        // Check for Windows: chmod +x will likely fail, so stop here.
+        if (SystemInformation::getCurrent()->isWindows()) {
+            return true;
+        }
+        // We have nothing to lose here
+        $process = new Process([
+            "chmod",
+            "+x",
+            self::getWoff2Executable()
+        ]);
+        $process->run();
+        return $process->isSuccessful();
     }
 
     /**
@@ -122,7 +164,7 @@ class WebOpenFontFormat2 implements FontDecoder
         // Check path exists
         $realpath = \realpath($path);
         if ($realpath === false) {
-            throw new RuntimeException('Util woff2_decompress could not be found, check your install. Path: '.$path);
+            throw new RuntimeException('Util woff2_decompress could not be found, check your install. Path: ' . $path);
         }
 
         self::$cachedWoff2Path = $realpath;

@@ -153,6 +153,12 @@ jobs:
             if [ "${{ matrix.os }}" = "freebsd" ]; then
               sudo pkg update -f
               sudo pkg install -y php83 php83-mbstring php83-phar php83-filter php83-zlib
+
+              # Enable extensions
+              sudo mv /usr/local/etc/php/ext-20-filter.ini.sample /usr/local/etc/php/ext-20-filter.ini
+              sudo mv /usr/local/etc/php/ext-20-mbstring.ini.sample /usr/local/etc/php/ext-20-mbstring.ini
+              sudo mv /usr/local/etc/php/ext-20-phar.ini.sample /usr/local/etc/php/ext-20-phar.ini
+              sudo mv /usr/local/etc/php/ext-20-zlib.ini.sample /usr/local/etc/php/ext-20-zlib.ini
             else
               # p7zip allows to uncompress 7z and is mandatory for composer
               # git is mandatory for composer
@@ -220,7 +226,7 @@ jobs:
 
             # Solaris sed does not support -i, so we must rewrite the file manually 
             # Fix extension_dir
-            sudo sh -c "sed 's|^;*extension_dir =.*|extension_dir = \"/usr/php/8.3/lib/extensions/no-debug-zts-20220829\"|' /etc/php/8.3/php.ini > /etc/php/8.3/php.ini.tmp"
+            sudo sh -c "sed 's|^;*extension_dir =.*|extension_dir = \"/usr/php/8.3/lib/extensions/no-debug-zts-20230831\"|' /etc/php/8.3/php.ini > /etc/php/8.3/php.ini.tmp"
             sudo mv /etc/php/8.3/php.ini.tmp /etc/php/8.3/php.ini
             
             # Fix scan_dir
