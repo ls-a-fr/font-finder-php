@@ -1029,7 +1029,7 @@ jobs:
 
             # Solaris sed does not support -i, so we must rewrite the file manually 
             # Fix extension_dir
-            sudo sh -c "sed 's|^;*extension_dir =.*|extension_dir = \"/usr/php/8.3/lib/extensions/no-debug-zts-20220829\"|' /etc/php/8.3/php.ini > /etc/php/8.3/php.ini.tmp"
+            sudo sh -c "sed 's|^;*extension_dir =.*|extension_dir = \"/usr/php/8.3/lib/extensions/no-debug-zts-20230831\"|' /etc/php/8.3/php.ini > /etc/php/8.3/php.ini.tmp"
             sudo mv /etc/php/8.3/php.ini.tmp /etc/php/8.3/php.ini
             
             # Fix scan_dir
