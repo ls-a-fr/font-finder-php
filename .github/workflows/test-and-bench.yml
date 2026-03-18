@@ -188,7 +188,9 @@ jobs:
 
               # Access to CLI php, as pkg_add of a specific PHP version won't create this
               # symbolic link out of the box
-              sudo ln -s /usr/local/bin/php-8.3 /usr/local/bin/php
+              if [ ! -e /usr/local/bin/php ]; then
+                sudo ln -s /usr/local/bin/php-8.3 /usr/local/bin/php
+              fi
             fi
 
             curl -sS https://getcomposer.org/installer -o composer-setup.php
