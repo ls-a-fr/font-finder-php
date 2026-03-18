@@ -1053,6 +1053,7 @@ jobs:
             sudo chmod +x deps/solaris-${{ matrix.arch }}/woff2_decompress
 
             # Install project dependencies
+            export COMPOSER_ALLOW_SUPERUSER="1"
             composer install --no-interaction --no-progress --prefer-dist
             composer test
 
