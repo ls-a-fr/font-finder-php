@@ -7,3 +7,5 @@ updates:
     # Check the npm registry for updates every month
     schedule:
       interval: "monthly"
+    cooldown:
+      default: 5
