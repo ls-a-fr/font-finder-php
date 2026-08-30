@@ -56,7 +56,7 @@ Plus plus d'informations, consultez l'[action test-and-bench](.github/workflows/
 
 ## Formats de polices pris en charge
 
-This library currently retrieves font information in these formats:
+Cette bibliothèque récupère pour le moment les informations des polices au sein des formats suivants :
 - AdobeFontMetrics (*.afm, in conjuction with PFA/PFB/T1/PS)
 - BitstreamSpeedo (*.spd)
 - BsdVgaFont (*.fnt, but BSD ones, not Microsoft)
@@ -251,7 +251,7 @@ $instance = FontFileFinder::inst()
     ]) ;
 ```
 
-Except method accepte des expressions régulières ; celles-ci sont exécutées sur le chemin absolu du fichier.
+La méthode except accepte des expressions régulières ; celles-ci sont exécutées sur le chemin absolu du fichier.
 Si vous préférez exclude via des chaînes de caractères, utilisez exceptExact.
 
 
@@ -282,7 +282,7 @@ $fonts = FontFileFinder::init()
     ->get();
 ```
 
-Vous pouvez également récupérer d'autres informations: le nombre de polices, et les erreurs. La méthode `get()` method permet de spécifier les données que vous souhaitez :
+Vous pouvez également récupérer d'autres informations: le nombre de polices, et les erreurs. La méthode `get()` permet de spécifier les données que vous souhaitez :
 
 ```php
 [$errors, $count, $fonts] = FontFileFinder::init()
